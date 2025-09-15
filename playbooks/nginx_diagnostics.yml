@@ -90,34 +90,34 @@
 
 ###############################################################################################
 #####################  UPLOAD REPORT TO SERVICE NOW (IF REQUIRED) ############################
-# - name: Upload report to ServiceNow
-#   hosts: localhost
-#   gather_facts: true
-#   tasks:
-#     # Create ServiceNow incident and set incident_sys_id so it's accessible in workflow or rulebook
-#     - name: Create a ServiceNow incident
-#       servicenow.itsm.incident:
-#         state: new
-#         caller: "admin"
-#         short_description: "{{ short_description }}"
-#         description: "{{ description }}"
-#         impact: "{{ impact }}"
-#         urgency: "{{ urgency }}"
-#         other:
-#           correlation_id: "{{ alert_fingerprint | default('') }}"
-#       register: create_incident
+- name: Upload report to ServiceNow
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    # # Create ServiceNow incident and set incident_sys_id so it's accessible in workflow or rulebook
+    # - name: Create a ServiceNow incident
+    #   servicenow.itsm.incident:
+    #     state: new
+    #     caller: "admin"
+    #     short_description: "{{ short_description }}"
+    #     description: "{{ description }}"
+    #     impact: "{{ impact }}"
+    #     urgency: "{{ urgency }}"
+    #     other:
+    #       correlation_id: "{{ alert_fingerprint | default('') }}"
+    #   register: create_incident
 
-#     - name: Update ticket with report
-#       servicenow.itsm.incident:
-#         sys_id: "{{ create_incident.record.sys_id }}"
-#         state: 2 # In Progress
-#         other:
-#           work_notes: "{{ hostvars[target_host].diagnostics_report }}"
+    - name: Update ticket with report
+      servicenow.itsm.incident:
+        sys_id: "{{ incident_sys_id }}"
+        state: 2 # In Progress
+        other:
+          work_notes: "{{ hostvars[target_host].diagnostics_report }}"
 
-#     - name: Consolidate all facts and original event into set_stats
-#       ansible.builtin.set_stats:
-#         data:
-#           incident_sys_id: "{{ create_incident.record.sys_id }}"
-#           eda_event: "{{ ansible_eda.event | default({}) }}"
-#           diagnostics: "{{ hostvars[target_host].diagnostics }}"
-#           target_host: "{{ target_host }}"
+    - name: Consolidate all facts and original event into set_stats
+      ansible.builtin.set_stats:
+        data:
+          incident_sys_id: "{{ incident_sys_id }}"
+          eda_event: "{{ ansible_eda.event | default({}) }}"
+          diagnostics: "{{ hostvars[target_host].diagnostics }}"
+          target_host: "{{ target_host }}"
