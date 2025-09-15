@@ -42,7 +42,7 @@
           event.diagnostics.nginx_config_error is match(".*cannot load certificate key.*", ignorecase=true)
       action:
         run_workflow_template:
-          name: servicenow_auto_remediate_tls-issue_workflow
+          name: servicenow_auto_remediate_cert-issue_workflow
           organization: Demo2
           job_args:
             extra_vars:
