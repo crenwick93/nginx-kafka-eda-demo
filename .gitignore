@@ -10,3 +10,4 @@ ansible.cfg
 .retry
 .vault_pass
 .env
+*.key

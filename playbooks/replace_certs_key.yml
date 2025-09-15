@@ -1,6 +1,6 @@
 ---
 - name: Replace cert and key for nginx
-  hosts: "{{ target_host }}"
+  hosts: "{{ target_host | default('nginx-web-app') }}"
   become: true
   gather_facts: true
 
@@ -10,25 +10,27 @@
         that:
           - ansible_play_hosts | length <= 1
         fail_msg: "Should only be one host in the play."
-      run_once: true
 
   tasks:
-    - name: Copy good TLS certificate from /var/certificates
+    - name: Copy TLS certificate from /var/certificates
       ansible.builtin.copy:
-        src: /var/certificates/good.crt
-        dest: /etc/nginx/ssl/server.crt
+        src: "/var/certificates/cert.crt"
+        dest: "/etc/nginx/ssl/server.crt"
         remote_src: true
+        mode: '0644'
 
-    - name: Copy good TLS key from /var/certificates
+    - name: Copy TLS key from /var/certificates
       ansible.builtin.copy:
-        src: /var/certificates/good.key
-        dest: /etc/nginx/ssl/server.key
+        src: "/var/certificates/cert.key"
+        dest: "/etc/nginx/ssl/server.key"
         remote_src: true
+        mode: '0600'
 
-    - name: reload nginx
+    - name: Reload nginx
       ansible.builtin.service:
         name: nginx
         state: reloaded
+
 
     # - name: Set incident_sys_id so its available on next rulebook run.
     #   ansible.builtin.set_stats:
