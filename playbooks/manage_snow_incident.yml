@@ -23,9 +23,9 @@
       tags:
         - create_incident
 
-    - name: Prevent Duplicated incidents by looking up existing incident by correlation_id
+    - name: Prevent Duplicated incidents by looking up existing active incident by correlation_id
       servicenow.itsm.incident_info:
-        sysparm_query: "correlation_id={{ alert_fingerprint }}"
+        sysparm_query: "correlation_id={{ alert_fingerprint }}^active=true"
       when: (alert_fingerprint | default('')) | length > 0
       register: existing_inc
       tags:
