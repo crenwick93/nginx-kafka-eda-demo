@@ -98,7 +98,7 @@
     - name: Create a ServiceNow incident
       servicenow.itsm.incident:
         state: new
-        caller: "eda_user"
+        caller: "System Administrator"
         short_description: "{{ short_description }}"
         description: "{{ description }}"
         impact: "{{ impact }}"
