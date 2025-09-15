@@ -77,15 +77,20 @@
     # Remediation will fail
     - name: Remediate nginx config error
       condition: >
-          event.diagnostics is defined and
-          event.diagnostics.nginx_config_error is match(".*unknown directive.*", ignorecase=true)
+          event.diagnostics_structured is defined and
+          event.diagnostics_structured.nginx_config_error is match(".*unknown directive.*", ignorecase=true)
       action:
         run_workflow_template:
           name: servicenow_auto_remediate_config-issue_workflow
           organization: Demo2
           job_args:
             extra_vars:
-              incident_sys_id: "{{ event.incident_sys_id }}"
+              #incident_sys_id: "{{ event.incident_sys_id }}"
+              short_description: "nginx.service failed on {{ event.target_host }}"
+              description: "{{ event.diagnostics_report }}"
+              alert_fingerprint: "{{ event.alert_fingerprint }}"
+              impact: 1
+              urgency: 1
               target_host: "{{ event.target_host }}"
               close_notes: | # on Success
                 ############# EDA REMEDIATION STATUS UPDATE - SUCCESS ##############
@@ -107,15 +112,21 @@
 
 
     # No fix for this issue
-    - name: Not a fix for this issue - update service now
-      condition: event.diagnostics is defined # defined but no known match for existing issue
+    - name: Not a fix for this issue - Create incident
+      condition: event.diagnostics_structured is defined # defined but no known match for existing issue
       action:
         run_job_template:
-          name: servicenow_incident_update
+          name: snow_create_incident
           organization: Demo2
           job_args:
             extra_vars:
-              incident_sys_id: "{{ event.incident_sys_id }}"
+          #    incident_sys_id: "{{ event.incident_sys_id }}"
+              short_description: "nginx.service failed on {{ event.target_host }}"
+              description: "{{ event.diagnostics_report }}"
+              alert_fingerprint: "{{ event.alert_fingerprint }}"
+              impact: 1
+              urgency: 1
+              target_host: "{{ event.target_host }}"
               work_notes: | # on Failure
                 ########## EDA REMEDIATION STATUS ############
 
