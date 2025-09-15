@@ -107,17 +107,18 @@
     #       correlation_id: "{{ alert_fingerprint | default('') }}"
     #   register: create_incident
 
-    - name: Update ticket with report
-      servicenow.itsm.incident:
-        sys_id: "{{ incident_sys_id }}"
-        state: 2 # In Progress
-        other:
-          work_notes: "{{ hostvars[target_host].diagnostics_report }}"
+    # - name: Update ticket with report
+    #   servicenow.itsm.incident:
+    #     sys_id: "{{ incident_sys_id }}"
+    #     state: 2 # In Progress
+    #     other:
+    #       work_notes: "{{ hostvars[target_host].diagnostics_report }}"
 
     - name: Consolidate all facts and original event into set_stats
       ansible.builtin.set_stats:
         data:
-          incident_sys_id: "{{ incident_sys_id }}"
+         # incident_sys_id: "{{ incident_sys_id }}"
           eda_event: "{{ ansible_eda.event | default({}) }}"
           diagnostics: "{{ hostvars[target_host].diagnostics }}"
           target_host: "{{ target_host }}"
+          alert_fingerprint: "{{ alert_fingerprint }}"
