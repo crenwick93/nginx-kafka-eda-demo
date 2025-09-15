@@ -1,0 +1,20 @@
+---
+- name: Respond to Alert Manager alerts
+  hosts: all
+  execution_strategy: parallel
+  sources:
+    - name: Listen for alerts on kafka topic
+      ansible.eda.kafka:
+        host: ec2-16-16-220-81.eu-north-1.compute.amazonaws.com
+        port: 9092
+        topic: alertmanager-alerts
+        group_id: eda-selinux
+      filters:
+        - ansible.eda.json_filter:
+        - ansible.eda.normalize_keys:
+  rules:
+    - name: output event
+      condition: event.meta is defined
+      action:
+        debug:
+          msg: "Event received TEST: {{ event }}"

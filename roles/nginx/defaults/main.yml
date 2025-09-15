@@ -1,0 +1,13 @@
+nginx_ssl_cert_src: "/var/certificates/good.crt"
+nginx_ssl_key_src: "/var/certificates/good.key"
+nginx_ssl_cert_dest: "/etc/nginx/ssl/server.crt"
+nginx_ssl_key_dest: "/etc/nginx/ssl/server.key"
+nginx_ssl_conf: "/etc/nginx/conf.d/ssl.conf"
+nginx_html_page: |
+  <html>
+    <head><title>Demo App</title></head>
+    <body>
+      <h1 style="text-align:center; margin-top:20%;">🚀 This is Demo App</h1>
+      <div style="text-align:center;"><img src="https://picsum.photos/400" /></div>
+    </body>
+  </html>

@@ -1,0 +1,12 @@
+server {
+    listen 443 ssl;
+    server_name demo-app-prod;
+
+    ssl_certificate /etc/nginx/ssl/server.crt;
+    ssl_certificate_key /etc/nginx/ssl/server.key;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+}

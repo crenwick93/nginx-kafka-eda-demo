@@ -1,0 +1,36 @@
+---
+- name: Replace cert and key for nginx
+  hosts: "{{ target_host }}"
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure only one host is targeted
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | length <= 1
+        fail_msg: "Should only be one host in the play."
+      run_once: true
+
+  tasks:
+    - name: Copy good TLS certificate from /var/certificates
+      ansible.builtin.copy:
+        src: /var/certificates/good.crt
+        dest: /etc/nginx/ssl/server.crt
+        remote_src: true
+
+    - name: Copy good TLS key from /var/certificates
+      ansible.builtin.copy:
+        src: /var/certificates/good.key
+        dest: /etc/nginx/ssl/server.key
+        remote_src: true
+
+    - name: reload nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
+    # - name: Set incident_sys_id so its available on next rulebook run.
+    #   ansible.builtin.set_stats:
+    #     data:
+    #       incident_sys_id: "{{ incident_sys_id }}"

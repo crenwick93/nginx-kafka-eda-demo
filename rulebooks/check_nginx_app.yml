@@ -1,0 +1,122 @@
+---
+- name: Check nginx app health and run diagnostics if unavailable
+  hosts: all
+  execution_strategy: parallel
+  sources:
+    - name: Listen for alerts onkafka topic
+      ansible.eda.kafka:
+        host: ec2-16-16-220-81.eu-north-1.compute.amazonaws.com
+        port: 9092
+        topic: alertmanager-alerts
+        group_id: eda-selinux
+      filters:
+        - ansible.eda.json_filter:
+        - ansible.eda.normalize_keys:
+  rules:
+###############################################################################################
+############################ RUN THE DIAGNOSTICS ##############################################
+
+    - name: Create incident on ServiceNow and run diagnostics
+      condition: event.url_check.status == "down"
+      action:
+        run_job_template:
+          name: nginx_diagnostics
+          organization: Demo2
+          post_events: true
+          job_args:
+            extra_vars:
+              short_description: "{{ event.url_check.url.split('://')[1].split('/')[0] }} is down"
+              description: "{{ event.url_check.url.split('://')[1].split('/')[0] }} is down - EDA will run diagnostics"
+              impact: 1
+              urgency: 1
+              target_host: "{{ event.url_check.url.split('://')[1].split('/')[0] }}"
+
+###############################################################################################
+#### RULES BELOW WILL BE TRIGGERED ON SECOND RUN (POST_EVENTS:TRUE) IF ANY CONDITIONS MATCH ###
+
+    # Working remediation
+    - name: Remediate TLS certificate issue
+      condition: >
+          event.diagnostics is defined and
+          event.diagnostics.nginx_config_error is match(".*cannot load certificate key.*", ignorecase=true)
+      action:
+        run_workflow_template:
+          name: servicenow_auto_remediate_tls-issue_workflow
+          organization: Demo2
+          job_args:
+            extra_vars:
+              incident_sys_id: "{{ event.incident_sys_id }}"
+              target_host: "{{ event.target_host }}"
+              close_notes: | # on Success
+                ########### EDA REMEDIATION STATUS UPDATE - SUCCESS #############
+
+                A TLS certificate verification failure was detected. This may be caused by an
+                expired certificate, a self-signed certificate that is not trusted, a missing
+                root or intermediate CA, or a mismatch between the certificate and its private key.
+
+                EDA has replaced the cert/key pair and remediated successfully.
+              work_notes: | # on Failure
+                ########## EDA REMEDIATION STATUS UPDATE - FAIL ##############
+
+                A TLS certificate verification failure was detected. This may be caused by an
+                expired certificate, a self-signed certificate that is not trusted, a missing
+                root or intermediate CA, or a mismatch between the certificate and its private key.
+                Please verify the certificate chain and ensure the correct key is configured.
+
+                EDA has not been successful in the attempted remediation. Please investigate.
+
+                The diagnostics report below may be of some assistance.
+
+
+    # Remediation will fail
+    - name: Remediate nginx config error
+      condition: >
+          event.diagnostics is defined and
+          event.diagnostics.nginx_config_error is match(".*unknown directive.*", ignorecase=true)
+      action:
+        run_workflow_template:
+          name: servicenow_auto_remediate_config-issue_workflow
+          organization: Demo2
+          job_args:
+            extra_vars:
+              incident_sys_id: "{{ event.incident_sys_id }}"
+              target_host: "{{ event.target_host }}"
+              close_notes: | # on Success
+                ############# EDA REMEDIATION STATUS UPDATE - SUCCESS ##############
+
+                The nginx configuration file contains an unknown directive, which indicates
+                a potential typo or unsupported instruction.
+
+                EDA has successfully remediated.
+              work_notes: | # on Failure
+                ############# EDA REMEDIATION STATUS UPDATE - FAIL ####################
+
+                The nginx configuration file contains an unknown directive, which indicates
+                a potential typo or unsupported instruction. Please verify the config for
+                syntax issues or misconfigured modules.
+
+                EDA has not been successful in the attempted remediation. Please investigate.
+
+                The diagnostics report below may be of some assistance.
+
+
+    # No fix for this issue
+    - name: Not a fix for this issue - update service now
+      condition: event.diagnostics is defined # defined but no known match for existing issue
+      action:
+        run_job_template:
+          name: servicenow_incident_update
+          organization: Demo2
+          job_args:
+            extra_vars:
+              incident_sys_id: "{{ event.incident_sys_id }}"
+              work_notes: | # on Failure
+                ########## EDA REMEDIATION STATUS ############
+
+                The reported issue is not currently covered in EDAs rulebook for autoremediation.
+
+                We recommend you investigate manually.
+
+                The diagnostics report below may be of some assistance.
+
+                ###########################################################

@@ -1,0 +1,22 @@
+---
+- name: Fix nginx config
+  hosts: "{{ target_host }}"
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure only one host is targeted
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | length <= 1
+        fail_msg: "Should only be one host in the play."
+      run_once: true
+
+  tasks:
+    - name: Nginx config fix
+      debug:
+        msg: "Simulating the fix of the nginx configuration file..."
+
+    # Designed to fail for demo reasons
+    - fail:
+

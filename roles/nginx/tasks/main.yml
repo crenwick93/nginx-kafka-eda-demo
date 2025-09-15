@@ -1,0 +1,97 @@
+- name: Ensure nginx is installed
+  ansible.builtin.package:
+    name: nginx
+    state: present
+
+- name: Set login banner for nginx server
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/motd
+    content: |
+      ##################################################
+      #  Welcome to the NGINX Server
+      #  Authorized access only!
+      #  Unauthorized use will be monitored and reported.
+
+           _  _     ___     ___    ____   __  __
+          | \| |   / __|   |_ _|  | \| |  \ \/ /
+          | .` |  | (_ |    | |   | .` |   >  <
+          |_|\_|   \___|   |___|  |_|\_|  /_/\_\
+          _|"""""|_|"""""|_|"""""|_|"""""|_|"""""|
+          "`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'"`-0-0-'
+
+
+      ##################################################
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create certificate storage directory
+  ansible.builtin.file:
+    path: /var/certificates
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy both good and expired cert/key files to /var/certificates
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "/var/certificates/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - src: good.crt
+      dest: good.crt
+      mode: '0644'
+    - src: good.key
+      dest: good.key
+      mode: '0600'
+
+- name: Create SSL directory
+  ansible.builtin.file:
+    path: /etc/nginx/ssl
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy good TLS certificate from /var/certificates
+  ansible.builtin.copy:
+    src: /var/certificates/good.crt
+    dest: /etc/nginx/ssl/server.crt
+    remote_src: true
+  notify: reload nginx
+
+- name: Copy good TLS key from /var/certificates
+  ansible.builtin.copy:
+    src: /var/certificates/good.key
+    dest: /etc/nginx/ssl/server.key
+    remote_src: true
+  notify: reload nginx
+
+- name: Deploy nginx SSL config
+  ansible.builtin.template:
+    src: ssl.conf.j2
+    dest: /etc/nginx/conf.d/ssl.conf
+  notify: reload nginx
+
+- name: Deploy HTML landing page
+  ansible.builtin.copy:
+    dest: /usr/share/nginx/html/index.html
+    content: |
+      <html>
+        <head><title>Demo App</title></head>
+        <body>
+          <h1 style="text-align:center; margin-top:20%;">This is Demo App</h1>
+          <div style="text-align:center;"><img src="https://picsum.photos/400" /></div>
+        </body>
+      </html>
+  notify: reload nginx
+
+- name: Start and enable nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true

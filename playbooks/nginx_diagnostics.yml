@@ -1,0 +1,123 @@
+---
+- name: Run diagnostics on nginx server
+  hosts: "{{ target_host }}"
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Ensure only one host is targeted
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts | length <= 1
+        fail_msg: "Should only be one host in the play."
+      run_once: true
+
+  tasks:
+    - name: Check if nginx service is active
+      ansible.builtin.systemd:
+        name: nginx
+      register: nginx_service_result
+      failed_when: false
+
+    - name: Validate nginx configuration
+      ansible.builtin.command: nginx -t
+      register: nginx_config_result
+      changed_when: false
+      failed_when: false
+
+    - name: Check if firewalld is running
+      ansible.builtin.systemd:
+        name: firewalld
+      register: firewall_result
+      failed_when: false
+
+    - name: Check if port 443 is open
+      ansible.builtin.command: firewall-cmd --list-ports
+      register: firewall_ports_result
+      changed_when: false
+      failed_when: false
+
+    - name: Build structured diagnostics data
+      ansible.builtin.set_fact:
+        diagnostics:
+          nginx_service_active: "{{ nginx_service_result.status.ActiveState == 'active' }}"
+          nginx_service_error: >-
+            {% if nginx_service_result.status.ActiveState != 'active' %}
+              {{ nginx_service_result.status.SubState }}
+            {% else %}
+              ''
+            {% endif %}
+          nginx_config_ok: "{{ nginx_config_result.rc == 0 }}"
+          nginx_config_error: >-
+            {% if nginx_config_result.rc != 0 %}
+              {{ nginx_config_result.stderr }}
+            {% else %}
+              ''
+            {% endif %}
+          firewall_active: "{{ firewall_result.status.ActiveState == 'active' }}"
+          firewall_port_443_open: "{{ '443/tcp' in firewall_ports_result.stdout }}"
+          overall_health: >-
+            {% if (nginx_service_result.status.ActiveState == 'active') and
+                   (nginx_config_result.rc == 0) and
+                   (firewall_result.status.ActiveState == 'active') and
+                   ('443/tcp' in firewall_ports_result.stdout) %}
+              ok
+            {% else %}
+              issues_detected
+            {% endif %}
+
+    - name: Set stats for EDA event posting
+      ansible.builtin.set_stats:
+        data:
+          diagnostics: "{{ diagnostics }}"
+
+    - name: Create readable diagnostics report
+      ansible.builtin.set_fact:
+        diagnostics_report: |
+          ################################### EDA REPORT ############################
+
+          NGINX service active: {{ nginx_service_result.status.ActiveState == 'active' }}
+          NGINX service error: {{ nginx_service_result.status.SubState if nginx_service_result.status.ActiveState != 'active' else '' }}
+          NGINX config test ok: {{ nginx_config_result.rc == 0 }}
+          NGINX config error: {{ nginx_config_result.stderr if nginx_config_result.rc != 0 else '' }}
+          Firewalld active: {{ firewall_result.status.ActiveState == 'active' }}
+          Port 443 open: {{ '443/tcp' in firewall_ports_result.stdout }}
+          Overall health: {{ 'ok' if (nginx_service_result.status.ActiveState == 'active') and (nginx_config_result.rc == 0) and (firewall_result.status.ActiveState == 'active') and ('443/tcp' in firewall_ports_result.stdout) else 'issues_detected' }}
+
+
+          EDA will attempt remedation...
+
+
+###############################################################################################
+#####################  UPLOAD REPORT TO SERVICE NOW (IF REQUIRED) ############################
+- name: Upload report to ServiceNow
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    # Create ServiceNow incident and set incident_sys_id so it's accessible in workflow or rulebook
+    - name: Create a ServiceNow incident
+      servicenow.itsm.incident:
+        state: new
+        caller: "eda_user"
+        short_description: "{{ short_description }}"
+        description: "{{ description }}"
+        impact: "{{ impact }}"
+        urgency: "{{ urgency }}"
+        other:
+          correlation_id: "{{ alert_fingerprint | default('') }}"
+      register: create_incident
+
+    - name: Update ticket with report
+      servicenow.itsm.incident:
+        sys_id: "{{ create_incident.record.sys_id }}"
+        state: 2 # In Progress
+        other:
+          work_notes: "{{ hostvars[target_host].diagnostics_report }}"
+
+    - name: Consolidate all facts and original event into set_stats
+      ansible.builtin.set_stats:
+        data:
+          incident_sys_id: "{{ create_incident.record.sys_id }}"
+          eda_event: "{{ ansible_eda.event | default({}) }}"
+          diagnostics: "{{ hostvars[target_host].diagnostics }}"
+          target_host: "{{ target_host }}"

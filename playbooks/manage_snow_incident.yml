@@ -1,0 +1,62 @@
+---
+- name: Manage Service Now incidents
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    ################################################################################################
+    ##############################   CREATING INCIDENTS  ###########################################
+
+    # Create ServiceNow incident and set incident_sys_id so it's accessible in workflow or rulebook
+    - name: Create a ServiceNow incident
+      servicenow.itsm.incident:
+        state: new
+        caller: "eda_user"
+        short_description: "{{ short_description }}"
+        description: "{{ description }}"
+        impact: "{{ impact }}"
+        urgency: "{{ urgency }}"
+        other:
+          correlation_id: "{{ alert_fingerprint | default('') }}"
+      register: create_incident
+      tags:
+        - create_incident
+
+    - name: Consolidate all facts and original event into set_stats
+      ansible.builtin.set_stats:
+        data:
+          incident_sys_id: "{{ create_incident.record.sys_id }}"
+          eda_event: "{{ original_event | default({}) }}"
+      tags:
+        - create_incident
+
+    ################################################################################################
+    ##############################   UPDATING INCIDENTS  ###########################################
+
+    # Update state and work notes on ServiceNow incident
+    - name: Update state and work notes on ServiceNow incident
+      servicenow.itsm.incident:
+        sys_id: "{{ incident_sys_id }}"
+        state: 2 # In Progress
+        other:
+          work_notes: "{{ work_notes }}"
+      tags:
+        - update_incident
+      register: update_incident
+
+    ################################################################################################
+    ##############################   RESOLVING INCIDENTS  ###########################################
+
+    # Resolve the ServiceNow incident with resolution information
+    - name: Resolve the ServiceNow incident
+      servicenow.itsm.incident:
+        sys_id: "{{ incident_sys_id }}"
+        state: 6  # 6 = Resolved
+        close_notes: >
+          "{{ close_notes | default("Issue automatically resolved by Event-Driven Ansible") }}"
+        close_code: "eda_resolved" # custom created close code (System Definition > Choice Lists) in SNOW
+        other:
+          resolved_by: "eda_user"
+      tags:
+        - resolve_incident
+      register: resolve_incident
