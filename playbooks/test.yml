@@ -1,0 +1,9 @@
+---
+- name: Test print of incident_sys_id
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Print incident_sys_id from extra vars
+      ansible.builtin.debug:
+        msg: "incident_sys_id: {{ incident_sys_id | default('UNDEFINED') }}"
