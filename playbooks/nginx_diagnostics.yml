@@ -100,10 +100,10 @@
 
 ###############################################################################################
 #####################  UPLOAD REPORT TO SERVICE NOW (IF REQUIRED) ############################
-- name: Upload report to ServiceNow
-  hosts: localhost
-  gather_facts: true
-  tasks:
+# - name: Upload report to ServiceNow
+#   hosts: localhost
+#   gather_facts: true
+#   tasks:
     # # Create ServiceNow incident and set incident_sys_id so it's accessible in workflow or rulebook
     # - name: Create a ServiceNow incident
     #   servicenow.itsm.incident:
@@ -124,11 +124,11 @@
     #     other:
     #       work_notes: "{{ hostvars[target_host].diagnostics_report }}"
 
-    - name: Consolidate all facts and original event into set_stats
-      ansible.builtin.set_stats:
-        data:
-         # incident_sys_id: "{{ incident_sys_id }}"
-          eda_event: "{{ ansible_eda.event | default({}) }}"
-          diagnostics: "{{ hostvars[target_host].diagnostics }}"
-          target_host: "{{ target_host }}"
-          alert_fingerprint: "{{ alert_fingerprint }}"
+    # - name: Consolidate all facts and original event into set_stats
+    #   ansible.builtin.set_stats:
+    #     data:
+    #      # incident_sys_id: "{{ incident_sys_id }}"
+    #       eda_event: "{{ ansible_eda.event | default({}) }}"
+    #       diagnostics: "{{ hostvars[target_host].diagnostics }}"
+    #       target_host: "{{ target_host }}"
+    #       alert_fingerprint: "{{ alert_fingerprint }}"
