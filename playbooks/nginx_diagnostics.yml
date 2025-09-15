@@ -66,10 +66,10 @@
               issues_detected
             {% endif %}
 
-    - name: Set stats for EDA event posting
-      ansible.builtin.set_stats:
-        data:
-          diagnostics: "{{ diagnostics }}"
+    # - name: Set stats for EDA event posting
+    #   ansible.builtin.set_stats:
+    #     data:
+    #       diagnostics: "{{ diagnostics }}"
 
     - name: Create readable diagnostics report
       ansible.builtin.set_fact:
