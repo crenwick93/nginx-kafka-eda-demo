@@ -18,7 +18,7 @@
     - name: Prevent Duplicated incidents by looking up existing incident by correlation_id
       servicenow.itsm.incident_info:
         query:
-          correlation_id: "{{ alert_fingerprint | default('') }}"
+          - correlation_id: "{{ alert_fingerprint | default('') }}"
         return_fields:
           - sys_id
           - number
