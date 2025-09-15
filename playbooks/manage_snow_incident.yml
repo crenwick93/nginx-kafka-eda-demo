@@ -3,6 +3,15 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  vars:
+    short_description: "EDA Demo incident"
+    description: "Incident created by EDA demo"
+    impact: 2
+    urgency: 2
+    work_notes: "Updated by EDA demo"
+    close_notes: "Issue automatically resolved by Event-Driven Ansible"
+    incident_sys_id: ""
+    alert_fingerprint: ""
   tasks:
     ################################################################################################
     ##############################   CREATING INCIDENTS  ###########################################
