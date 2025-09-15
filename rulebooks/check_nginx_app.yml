@@ -25,10 +25,10 @@
           post_events: true
           job_args:
             extra_vars:
-              short_description: "nginx.service failed on {{ event.body.commonLabels.instance }}"
-              description: "{{ event.body.commonAnnotations.summary | default('nginx.service failed') }}"
-              impact: 1
-              urgency: 1
+              # short_description: "nginx.service failed on {{ event.body.commonLabels.instance }}"
+              # description: "{{ event.body.commonAnnotations.summary | default('nginx.service failed') }}"
+              # impact: 1
+              # urgency: 1
               target_host: "{{ event.body.commonLabels.instance }}"
               alert_fingerprint: "{{ event.body.alerts[0].fingerprint }}"
 
@@ -38,8 +38,8 @@
     # Working remediation
     - name: Remediate TLS certificate issue
       condition: >
-          event.diagnostics is defined and
-          event.diagnostics.nginx_config_error is match(".*cannot load certificate key.*", ignorecase=true)
+          event.diagnostics_structured is defined and
+          event.diagnostics_structured.nginx_config_error is match(".*cannot load certificate key.*", ignorecase=true)
       action:
         run_workflow_template:
           name: servicenow_auto_remediate_cert-issue_workflow

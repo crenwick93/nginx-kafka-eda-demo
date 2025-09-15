@@ -39,7 +39,7 @@
 
     - name: Build structured diagnostics data
       ansible.builtin.set_fact:
-        diagnostics:
+        diagnostics_structured:
           nginx_service_active: "{{ nginx_service_result.status.ActiveState == 'active' }}"
           nginx_service_error: >-
             {% if nginx_service_result.status.ActiveState != 'active' %}
@@ -86,6 +86,16 @@
 
 
           EDA will attempt remedation...
+
+    - name: Consolidate all facts and original event into set_stats
+      ansible.builtin.set_stats:
+        data:
+         # incident_sys_id: "{{ incident_sys_id }}"
+          eda_event: "{{ ansible_eda.event | default({}) }}"
+          diagnostics_structured: "{{ diagnostics_structured }}"
+          target_host: "{{ target_host }}"
+          alert_fingerprint: "{{ alert_fingerprint }}"
+          diagnostics_report: "{{ diagnostics_report }}"
 
 
 ###############################################################################################
