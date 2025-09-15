@@ -35,7 +35,7 @@
     - name: Create a ServiceNow incident
       servicenow.itsm.incident:
         state: new
-        caller: "System Administrator"
+        caller: "admin"
         short_description: "{{ short_description }}"
         description: "{{ description }}"
         impact: "{{ impact }}"
@@ -91,7 +91,7 @@
           "{{ close_notes | default("Issue automatically resolved by Event-Driven Ansible") }}"
         close_code: "eda_resolved" # custom created close code (System Definition > Choice Lists) in SNOW
         other:
-          resolved_by: "System Administrator"
+          resolved_by: "admin"
       tags:
         - resolve_incident
       register: resolve_incident
