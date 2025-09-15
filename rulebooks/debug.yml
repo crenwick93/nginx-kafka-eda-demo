@@ -13,8 +13,7 @@
         - ansible.eda.json_filter:
         - ansible.eda.normalize_keys:
   rules:
-    - name: output event
+    - name: Output whole event
       condition: event.meta is defined
       action:
-        debug:
-          msg: "Event received TEST: {{ event }}"
+        print_event:

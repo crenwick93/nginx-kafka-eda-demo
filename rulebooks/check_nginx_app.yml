@@ -17,7 +17,11 @@
 ############################ RUN THE DIAGNOSTICS ##############################################
 
     - name: Create incident on ServiceNow and run diagnostics
-      condition: event.url_check.status == "down"
+      condition: >
+          event.status == "firing" and
+          event.common_labels is defined and
+          event.common_labels.name == "nginx.service" and
+          event.common_labels.state == "failed"
       action:
         run_job_template:
           name: nginx_diagnostics
@@ -25,11 +29,12 @@
           post_events: true
           job_args:
             extra_vars:
-              short_description: "{{ event.url_check.url.split('://')[1].split('/')[0] }} is down"
-              description: "{{ event.url_check.url.split('://')[1].split('/')[0] }} is down - EDA will run diagnostics"
+              short_description: "nginx.service failed on {{ event.common_labels.instance }}"
+              description: "{{ event.common_annotations.summary | default('nginx.service failed') }}"
               impact: 1
               urgency: 1
-              target_host: "{{ event.url_check.url.split('://')[1].split('/')[0] }}"
+              target_host: "{{ event.common_labels.instance }}"
+              alert_fingerprint: "{{ (event.alerts | default([])) and (event.alerts[0].fingerprint | default('')) }}"
 
 ###############################################################################################
 #### RULES BELOW WILL BE TRIGGERED ON SECOND RUN (POST_EVENTS:TRUE) IF ANY CONDITIONS MATCH ###
