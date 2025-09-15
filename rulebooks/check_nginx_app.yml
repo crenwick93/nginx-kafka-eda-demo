@@ -39,7 +39,7 @@
     - name: Remediate TLS certificate issue
       condition: >
           event.diagnostics_structured is defined and
-          event.diagnostics_structured.nginx_config_error is match(".*cannot load certificate key.*", ignorecase=true)
+          event.diagnostics_structured.nginx_config_error is match(".*cannot load certificate.*", ignorecase=true)
       action:
         run_workflow_template:
           name: servicenow_auto_remediate_cert-issue_workflow
@@ -85,7 +85,7 @@
           organization: Demo2
           job_args:
             extra_vars:
-              #incident_sys_id: "{{ event.incident_sys_id }}"
+              # incident_sys_id: "{{ event.incident_sys_id }}"
               short_description: "nginx.service failed on {{ event.target_host }}"
               description: "{{ event.diagnostics_report }}"
               alert_fingerprint: "{{ event.alert_fingerprint }}"
@@ -113,7 +113,7 @@
 
     # No fix for this issue
     - name: Not a fix for this issue - Create incident
-      condition: event.diagnostics_structured is defined # defined but no known match for existing issue
+      condition: event.diagnostics_structured is defined
       action:
         run_job_template:
           name: snow_create_incident
