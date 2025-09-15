@@ -19,10 +19,6 @@
       servicenow.itsm.incident_info:
         query:
           - correlation_id: "{{ alert_fingerprint | default('') }}"
-        return_fields:
-          - sys_id
-          - number
-          - state
       register: existing_inc
       tags:
         - create_incident
@@ -41,12 +37,23 @@
       register: create_incident
       tags:
         - create_incident
+      when: (existing_inc.records | default([])) | length == 0
 
-    - name: Consolidate all facts and original event into set_stats
+    - name: Set stats from existing incident
+      ansible.builtin.set_stats:
+        data:
+          incident_sys_id: "{{ existing_inc.records[0].sys_id }}"
+          eda_event: "{{ original_event | default({}) }}"
+      when: (existing_inc.records | default([])) | length > 0
+      tags:
+        - create_incident
+
+    - name: Set stats from created incident
       ansible.builtin.set_stats:
         data:
           incident_sys_id: "{{ create_incident.record.sys_id }}"
           eda_event: "{{ original_event | default({}) }}"
+      when: (existing_inc.records | default([])) | length == 0
       tags:
         - create_incident
 
