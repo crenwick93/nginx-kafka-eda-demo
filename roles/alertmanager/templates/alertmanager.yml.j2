@@ -1,0 +1,30 @@
+route:
+  receiver: {{
+    'eda_webhook' if alertmanager_forwarder_mode | default('servicenow') == 'webhook'
+    else ('kafka_forwarder' if alertmanager_forwarder_mode == 'kafka' else 'servicenow_forwarder')
+  }}
+  repeat_interval: {{ alertmanager_repeat_interval | default('10m') }}
+  group_wait: 15s
+  group_interval: 15s
+
+receivers:
+{% if alertmanager_forwarder_mode | default('servicenow') == 'webhook' %}
+  - name: eda_webhook
+    webhook_configs:
+      - url: '{{ eda_webhook_url }}'
+        send_resolved: false
+        http_config:
+          bearer_token: "{{ eda_event_stream_token }}"
+          tls_config:
+            insecure_skip_verify: true
+{% elif alertmanager_forwarder_mode == 'kafka' %}
+  - name: kafka_forwarder
+    webhook_configs:
+      - url: 'http://127.0.0.1:{{ alertmanager_forwarder_port | default(9097) }}'
+        send_resolved: false
+{% else %}
+  - name: servicenow_forwarder
+    webhook_configs:
+      - url: 'http://127.0.0.1:{{ alertmanager_forwarder_port | default(9097) }}'
+        send_resolved: false
+{% endif %}

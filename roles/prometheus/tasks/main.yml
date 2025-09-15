@@ -1,0 +1,56 @@
+---
+- name: Ensure Podman is installed
+  ansible.builtin.package:
+    name:
+      - podman
+    state: present
+
+- name: Ensure Podman pod exists
+  containers.podman.podman_pod:
+    name: monitoring
+    state: created
+    ports:
+      - "9090:9090"
+      - "9093:9093"
+
+- name: Create Prometheus config directory
+  ansible.builtin.file:
+    path: /etc/prometheus/
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Prometheus configuration file
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Generate dynamic Prometheus targets file
+  template:
+    src: targets.json.j2
+    dest: /etc/prometheus/targets.json
+    mode: '0644'
+
+- name: Deploy Prometheus alert rules file
+  ansible.builtin.copy:
+    src: alert-rules.yml
+    dest: /etc/prometheus/alert-rules.yml
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Run Prometheus container in Podman pod
+  containers.podman.podman_container:
+    name: prometheus
+    pod: monitoring
+    image: docker.io/prom/prometheus
+    state: started
+    restart_policy: always
+    volumes:
+      - /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:z
+      - /etc/prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:z
+      - /etc/prometheus/targets.json:/etc/prometheus/targets.json:z

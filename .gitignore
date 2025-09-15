@@ -1,0 +1,12 @@
+env_script.sh
+.ansible
+vault.yml
+playbooks/vars/*.yml
+!playbooks/vars/*.yml.example
+inventory
+!inventory.example
+ansible.cfg
+!ansible.cfg.example
+.retry
+.vault_pass
+.env

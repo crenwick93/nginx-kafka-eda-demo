@@ -1,0 +1,16 @@
+## Vector configuration for forwarding Alertmanager payloads to Kafka
+
+[sources.alertmanager]
+type = "http_server"
+address = "0.0.0.0:{{ alertmanager_forwarder_port | default(9097) }}"
+path = "/"
+encoding = "json"
+
+[sinks.kafka]
+type = "kafka"
+inputs = ["alertmanager"]
+bootstrap_servers = "{{ alertmanager_kafka_broker | default('localhost:9092') }}"
+topic = "{{ alertmanager_kafka_topic | default('alertmanager-alerts') }}"
+encoding.codec = "json"
+
+

@@ -1,0 +1,9 @@
+---
+- name: Install Prometheus and Alertmanager with Alertmanager forwarder to ServiceNow
+  hosts: prometheus-am
+  become: true
+  vars_files:
+    - ./vars/prometheus-am.yml
+  roles:
+    - prometheus
+    - alertmanager

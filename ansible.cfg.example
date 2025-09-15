@@ -1,0 +1,6 @@
+[defaults]
+# Set your SSH key/user locally instead of committing them
+# private_key_file = ~/.ssh/your-key.pem
+# remote_user = ec2-user
+roles_path = ./roles
+

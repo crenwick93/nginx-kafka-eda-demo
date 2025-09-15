@@ -1,0 +1,23 @@
+---
+# Example vars for Prometheus + Alertmanager setup
+
+# Forwarder selection: webhook | kafka | servicenow
+alertmanager_forwarder_mode: servicenow
+
+# Common forwarder settings
+alertmanager_forwarder_port: 9097
+alertmanager_repeat_interval: 1h
+
+# Webhook (EDA)
+# eda_webhook_url: https://EXAMPLE/eda-event-streams/.../post/
+# eda_event_stream_token: "{{ vault_eda_event_stream_token }}"
+
+# Kafka
+# alertmanager_kafka_broker: broker1:9092
+# alertmanager_kafka_topic: alertmanager-alerts
+
+# ServiceNow
+servicenow_instance_url: https://YOUR_INSTANCE.service-now.com
+servicenow_username: YOUR_USERNAME
+# servicenow_password: "{{ vault_servicenow_password }}"
+

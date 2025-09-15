@@ -1,0 +1,6 @@
+[apps]
+nginx-web-app ansible_host=YOUR_APP_HOST
+
+[monitoring]
+prometheus-am ansible_host=YOUR_MONITORING_HOST
+
