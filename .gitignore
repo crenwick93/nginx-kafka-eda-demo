@@ -11,3 +11,4 @@ ansible.cfg
 .vault_pass
 .env
 *.key
+.vscode

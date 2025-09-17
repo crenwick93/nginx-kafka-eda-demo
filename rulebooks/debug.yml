@@ -7,7 +7,7 @@
       ansible.eda.kafka:
         host: ec2-16-16-220-81.eu-north-1.compute.amazonaws.com
         port: 9092
-        topic: alertmanager-alerts
+        topic: demo-topic
         group_id: eda-selinux
       filters:
         - ansible.eda.json_filter:
